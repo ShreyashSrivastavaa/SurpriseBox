@@ -1,112 +1,131 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import GiftBox from "@/components/GiftBox";
+import SurpriseReveal from "@/components/SurpriseReveal";
+import SurpriseHistory from "@/components/SurpriseHistory";
+import { ConfettiBurst } from "@/components/Confetti";
 
-const items = [
-  { emoji: "🌹", name: "rose" },
-  { emoji: "🎂", name: "cake" },
-  { emoji: "🧁", name: "cupcake" },
-  { emoji: "🎈", name: "balloon" },
-  { emoji: "❤️", name: "heart" },
-  { emoji: "🎁", name: "gift" },
-  { emoji: "🧸", name: "teddy bear" },
-  { emoji: "⭐", name: "star" },
+const surpriseItems = ["rose", "cake", "cupcake", "balloon", "heart", "gift", "teddy", "star"];
+
+const messagePool = [
+  "You're magic, Mannu! ✨",
+  "A rose for the sweetest sister 🌹",
+  "Cake? Always! 🎂",
+  "You make the world brighter 🌈",
+  "Hope this makes you smile 😊",
+  "You deserve a party! 🎉",
+  "Teddy hug coming your way 🧸",
+  "Shine on, star! ⭐",
+  "Another little joy for you 💕",
+  "You're the best, Mannu! 💗",
+  "A cupcake as sweet as you! 🧁",
+  "Sending you all the love 💝",
+  "You're one in a million! 🌟",
+  "This one's just for you! 🎁",
+  "Keep being amazing, Mannu! 🦋",
+  "A balloon to lift your spirits! 🎈",
 ];
 
-const messages = [
-  "You're amazing, Mannu! ✨",
-  "A little something for you! 💕",
-  "Hope you smile today! 😊",
-  "You deserve a treat! 🍬",
-  "Love you, little sis! 💗",
-  "You make the world brighter! 🌈",
-  "A rose for you! 🌸",
-  "You're the sweetest! 🍭",
-  "Sending you a big hug! 🤗",
-  "Mannu, you're a star! 🌟",
-];
+const MILESTONE_TAPS = [5, 10, 20, 50, 100];
+const STORAGE_KEY = "mannu-surprises";
+
+const loadState = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { count: parsed.count || 0, history: parsed.history || [] };
+    }
+  } catch { /* ignore */ }
+  return { count: 0, history: [] as string[] };
+};
+
+const saveState = (count: number, history: string[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ count, history }));
+  } catch { /* ignore */ }
+};
 
 const Index = () => {
-  const [revealed, setRevealed] = useState<{ emoji: string; message: string } | null>(null);
+  const [state, setState] = useState(loadState);
+  const [currentItem, setCurrentItem] = useState<string | null>(null);
+  const [currentMessage, setCurrentMessage] = useState<string | null>(null);
   const [animKey, setAnimKey] = useState(0);
-  const [sparkles, setSparkles] = useState<number[]>([]);
   const [wiggle, setWiggle] = useState(false);
+  const [sparkleTrigger, setSparkleTrigger] = useState(0);
+  const [confettiTrigger, setConfettiTrigger] = useState(0);
+  const [countBump, setCountBump] = useState(false);
+
+  // Persist state changes
+  useEffect(() => {
+    saveState(state.count, state.history);
+  }, [state]);
 
   const handleTap = useCallback(() => {
-    const item = items[Math.floor(Math.random() * items.length)];
-    const msg = messages[Math.floor(Math.random() * messages.length)];
-    setRevealed({ emoji: item.emoji, message: msg });
+    // Random item & message
+    const item = surpriseItems[Math.floor(Math.random() * surpriseItems.length)];
+    const msg = messagePool[Math.floor(Math.random() * messagePool.length)];
+
+    setCurrentItem(item);
+    setCurrentMessage(msg);
     setAnimKey((k) => k + 1);
-    setSparkles(Array.from({ length: 5 }, (_, i) => i));
+
+    // Wiggle box
     setWiggle(true);
-    setTimeout(() => setWiggle(false), 400);
-    setTimeout(() => setSparkles([]), 1500);
-  }, []);
+    setTimeout(() => setWiggle(false), 500);
+
+    // Sparkles
+    setSparkleTrigger((t) => t + 1);
+
+    // Counter bump
+    setCountBump(true);
+    setTimeout(() => setCountBump(false), 300);
+
+    // Update state
+    const newCount = state.count + 1;
+    const newHistory = [...state.history, item];
+    setState({ count: newCount, history: newHistory });
+
+    // Milestone confetti
+    if (MILESTONE_TAPS.includes(newCount)) {
+      setConfettiTrigger((t) => t + 1);
+    }
+
+    // Haptic feedback
+    try {
+      if (navigator.vibrate) navigator.vibrate(15);
+    } catch { /* ignore */ }
+  }, [state]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-8 select-none">
-      {/* Floating decorations */}
-      <div className="fixed top-6 left-6 text-3xl opacity-40 animate-bounce" style={{ animationDuration: "3s" }}>🌸</div>
-      <div className="fixed top-10 right-8 text-2xl opacity-30 animate-bounce" style={{ animationDuration: "2.5s", animationDelay: "0.5s" }}>⭐</div>
-      <div className="fixed bottom-12 left-10 text-2xl opacity-30 animate-bounce" style={{ animationDuration: "3.5s", animationDelay: "1s" }}>🎈</div>
-      <div className="fixed bottom-8 right-6 text-3xl opacity-40 animate-bounce" style={{ animationDuration: "2.8s" }}>💗</div>
+    <main className="animated-bg min-h-screen flex flex-col items-center justify-center px-4 py-8 select-none relative overflow-hidden">
+      {/* Confetti overlay */}
+      <ConfettiBurst trigger={confettiTrigger} />
 
-      <h1 className="text-2xl md:text-3xl font-extrabold text-primary mb-6 text-center">
-        🎀 A Little Surprise for Mannu 🎀
+      {/* Header */}
+      <h1 className="font-hand text-3xl md:text-4xl text-primary mb-8 text-center drop-shadow-sm">
+        Mannu's Magic Surprises ✨
       </h1>
 
       {/* Gift Box */}
-      <button
-        onClick={handleTap}
-        className={`relative w-52 h-52 md:w-60 md:h-60 rounded-3xl flex flex-col items-center justify-center cursor-pointer 
-          shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 
-          border-4 border-primary/30 ${wiggle ? "animate-wiggle" : ""}`}
-        style={{ background: "var(--gift-gradient)" }}
-      >
-        <span className="text-5xl md:text-6xl mb-2">🎁</span>
-        <span className="text-primary-foreground font-bold text-lg md:text-xl text-center px-4 drop-shadow">
-          Tap for Mannu ❤️
-        </span>
+      <GiftBox onTap={handleTap} wiggle={wiggle} sparkleTrigger={sparkleTrigger} />
 
-        {/* Sparkles */}
-        {sparkles.map((i) => (
-          <span
-            key={`${animKey}-${i}`}
-            className="absolute text-xl animate-float-up pointer-events-none"
-            style={{
-              left: `${20 + Math.random() * 60}%`,
-              top: `${10 + Math.random() * 40}%`,
-              animationDelay: `${i * 0.1}s`,
-            }}
-          >
-            ✨
-          </span>
-        ))}
-      </button>
+      {/* Surprise Reveal Area */}
+      <div className="mt-8 min-h-[12rem] md:min-h-[14rem] flex items-start justify-center w-full max-w-sm">
+        <SurpriseReveal item={currentItem} message={currentMessage} animKey={animKey} />
+      </div>
 
-      {/* Result bubble */}
-      {revealed && (
-        <div
-          key={animKey}
-          className="mt-8 animate-pop-in flex flex-col items-center"
-        >
-          <div
-            className="rounded-2xl px-8 py-6 shadow-md border-2 border-accent/40 max-w-xs text-center"
-            style={{ backgroundColor: "hsl(var(--bubble-bg))" }}
-          >
-            <span className="text-6xl md:text-7xl block mb-3">{revealed.emoji}</span>
-            <p className="text-foreground font-bold text-lg md:text-xl">{revealed.message}</p>
-          </div>
-          {/* Speech bubble tail */}
-          <div
-            className="w-4 h-4 rotate-45 -mt-2 border-b-2 border-r-2 border-accent/40"
-            style={{ backgroundColor: "hsl(var(--bubble-bg))" }}
-          />
+      {/* History & Counter */}
+      <SurpriseHistory count={state.count} history={state.history} countBump={countBump} />
+
+      {/* Noscript fallback */}
+      <noscript>
+        <div className="fixed inset-0 flex items-center justify-center bg-background z-50 p-8">
+          <p className="text-center text-xl font-hand text-foreground">
+            Please enable JavaScript to open your surprises, Mannu! ❤️
+          </p>
         </div>
-      )}
-
-      <p className="mt-10 text-muted-foreground text-sm text-center">
-        Keep tapping for more surprises! 🥰
-      </p>
-    </div>
+      </noscript>
+    </main>
   );
 };
 
