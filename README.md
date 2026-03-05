@@ -1,73 +1,55 @@
-# Welcome to your Lovable project
+# SurpriseBox — Magic Surprises for Mannu ✨
 
-## Project info
+A cute, interactive gift box application built with React, Vite, and a Node.js backend. This project was personalized for Mannu to ensure her surprise counts and history are saved across all her devices!
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 How it Works
 
-## How can I edit this code?
+- **Frontend:** A React + Vite application (originally from Lovable) using Tailwind CSS and Shadcn UI.
+- **Backend:** A lightweight Express server located in the `/backend` directory.
+- **Persistence:** Uses **lowdb** (JSON-based storage) to remember every tap and surprise revealed, even if the page is refreshed or opened on a different device.
+- **Fallback:** If the backend is down, it safely falls back to `localStorage`.
 
-There are several ways of editing your application.
+## 🛠️ Local Development
 
-**Use Lovable**
+1. **Install dependencies:**
+   ```sh
+   # In the root (for Frontend)
+   npm install
+   
+   # In /backend (for Backend)
+   cd backend
+   npm install
+   ```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+2. **Start the applications:**
+   ```sh
+   # Start Backend (on port 3001)
+   cd backend
+   npm run dev
+   
+   # Start Frontend (on port 8080/8081)
+   cd ..
+   npm run dev
+   ```
 
-Changes made via Lovable will be committed automatically to this repo.
+3. **Open [http://localhost:8081](http://localhost:8081)** to see the magic!
 
-**Use your preferred IDE**
+## 🌍 Deployment
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+To make this live for Mannu, follow these steps:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 1. Backend (Railway)
+- Connect this GitHub repo to **[Railway.app](https://railway.app/)**.
+- In the project settings, set the **Root Directory** to `/backend`.
+- Railway will automatically deploy it. Copy the generated URL.
 
-Follow these steps:
+### 2. Frontend (Netlify)
+- Connect this GitHub repo to **[Netlify.com](https://www.netlify.com/)**.
+- Netlify will use the `netlify.toml` automatically.
+- **Crucial:** Add an environment variable named `VITE_API_URL` and set its value to your **Railway Backend URL**.
+- Once deployed, share the Netlify link with Mannu! 🎁
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🎒 Tech Stack
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS, Lucide Icons, Shadcn UI.
+- **Backend:** Node.js, Express, lowdb.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
