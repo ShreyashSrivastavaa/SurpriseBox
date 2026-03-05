@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import GiftBox from "@/components/GiftBox";
 import SurpriseReveal from "@/components/SurpriseReveal";
 import SurpriseHistory from "@/components/SurpriseHistory";
@@ -27,8 +27,10 @@ const messagePool = [
 
 const MILESTONE_TAPS = [5, 10, 20, 50, 100];
 const STORAGE_KEY = "mannu-surprises";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-const loadState = () => {
+// --- localStorage helpers (fallback) ---
+const loadLocalState = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -39,14 +41,39 @@ const loadState = () => {
   return { count: 0, history: [] as string[] };
 };
 
-const saveState = (count: number, history: string[]) => {
+const saveLocalState = (count: number, history: string[]) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ count, history }));
   } catch { /* ignore */ }
 };
 
+// --- API helpers ---
+const fetchState = async (): Promise<{ count: number; history: string[] } | null> => {
+  try {
+    const res = await fetch(`${API_URL}/api/state`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+};
+
+const postTap = async (item: string): Promise<{ count: number; history: string[] } | null> => {
+  try {
+    const res = await fetch(`${API_URL}/api/tap`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item }),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+};
+
 const Index = () => {
-  const [state, setState] = useState(loadState);
+  const [state, setState] = useState<{ count: number; history: string[] }>({ count: 0, history: [] });
   const [currentItem, setCurrentItem] = useState<string | null>(null);
   const [currentMessage, setCurrentMessage] = useState<string | null>(null);
   const [animKey, setAnimKey] = useState(0);
@@ -54,47 +81,65 @@ const Index = () => {
   const [sparkleTrigger, setSparkleTrigger] = useState(0);
   const [confettiTrigger, setConfettiTrigger] = useState(0);
   const [countBump, setCountBump] = useState(false);
+  const useBackend = useRef(true);
 
-  // Persist state changes
+  // Load state on mount — prefer backend, fall back to localStorage
   useEffect(() => {
-    saveState(state.count, state.history);
-  }, [state]);
+    (async () => {
+      const remote = await fetchState();
+      if (remote) {
+        setState(remote);
+        saveLocalState(remote.count, remote.history);
+      } else {
+        useBackend.current = false;
+        setState(loadLocalState());
+      }
+    })();
+  }, []);
 
-  const handleTap = useCallback(() => {
-    // Random item & message
+  const handleTap = useCallback(async () => {
     const item = surpriseItems[Math.floor(Math.random() * surpriseItems.length)];
     const msg = messagePool[Math.floor(Math.random() * messagePool.length)];
 
     setCurrentItem(item);
     setCurrentMessage(msg);
     setAnimKey((k) => k + 1);
-
-    // Wiggle box
     setWiggle(true);
     setTimeout(() => setWiggle(false), 500);
-
-    // Sparkles
     setSparkleTrigger((t) => t + 1);
-
-    // Counter bump
     setCountBump(true);
     setTimeout(() => setCountBump(false), 300);
 
-    // Update state
-    const newCount = state.count + 1;
-    const newHistory = [...state.history, item];
-    setState({ count: newCount, history: newHistory });
+    let newState: { count: number; history: string[] };
 
-    // Milestone confetti
-    if (MILESTONE_TAPS.includes(newCount)) {
+    if (useBackend.current) {
+      const remote = await postTap(item);
+      if (remote) {
+        newState = remote;
+        saveLocalState(remote.count, remote.history);
+      } else {
+        // Backend failed mid-session — fall back to local
+        useBackend.current = false;
+        const local = loadLocalState();
+        newState = { count: local.count + 1, history: [...local.history, item] };
+        saveLocalState(newState.count, newState.history);
+      }
+    } else {
+      const local = loadLocalState();
+      newState = { count: local.count + 1, history: [...local.history, item] };
+      saveLocalState(newState.count, newState.history);
+    }
+
+    setState(newState);
+
+    if (MILESTONE_TAPS.includes(newState.count)) {
       setConfettiTrigger((t) => t + 1);
     }
 
-    // Haptic feedback
     try {
       if (navigator.vibrate) navigator.vibrate(15);
     } catch { /* ignore */ }
-  }, [state]);
+  }, []);
 
   return (
     <main className="animated-bg min-h-screen flex flex-col items-center justify-center px-4 py-8 select-none relative overflow-hidden">
@@ -130,3 +175,5 @@ const Index = () => {
 };
 
 export default Index;
+
+
