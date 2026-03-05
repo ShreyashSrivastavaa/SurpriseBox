@@ -38,16 +38,19 @@ A cute, interactive gift box application built with React, Vite, and a Node.js b
 
 To make this live for Mannu, follow these steps:
 
-### 1. Backend (Railway)
-- Connect this GitHub repo to **[Railway.app](https://railway.app/)**.
-- In the project settings, set the **Root Directory** to `/backend`.
-- Railway will automatically deploy it. Copy the generated URL.
+### 1. Backend (Render)
+- Go to **[Render.com](https://render.com/)**, click **+ New** > **Web Service**.
+- Connect your GitHub repo.
+- Set **Root Directory** to `backend`.
+- Choose the **Free** tier.
+- Copy your service's URL (starts with `https://...onrender.com`).
 
 ### 2. Frontend (Netlify)
 - Connect this GitHub repo to **[Netlify.com](https://www.netlify.com/)**.
 - Netlify will use the `netlify.toml` automatically.
-- **Crucial:** Add an environment variable named `VITE_API_URL` and set its value to your **Railway Backend URL**.
-- Once deployed, share the Netlify link with Mannu! 🎁
+- **Add an Environment Variable:** Name it `VITE_API_URL` and set its value to your **Render Backend URL**.
+- Click **Deploy**.
+
 
 ## 🎒 Tech Stack
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS, Lucide Icons, Shadcn UI.
